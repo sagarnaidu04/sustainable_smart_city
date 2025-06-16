@@ -6,6 +6,10 @@ from sklearn.linear_model import LinearRegression
 from io import StringIO
 from gradio.themes.base import Base
 from gradio.themes.utils import colors, fonts
+import torch
+
+# GPU Check (Optional Debug Info)
+print("✅ Model loading... GPU available:", torch.cuda.is_available())
 
 # Custom theme
 custom_theme = Base(
@@ -16,7 +20,11 @@ custom_theme = Base(
 # Load IBM Granite model
 model_name = "ibm-granite/granite-3.3-2b-instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    device_map="auto",
+    torch_dtype=torch.float16  # Faster inference on GPU
+)
 llm = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
 # Module 1: Policy Summarization
@@ -28,7 +36,7 @@ def policy_summarizer_v2(text, file):
     else:
         return "⚠️ Please upload a file or paste some text."
     prompt = f"Summarize the following city policy in simple terms:\n{content}\nSummary:"
-    result = llm(prompt, max_new_tokens=200)[0]["generated_text"]
+    result = llm(prompt, max_new_tokens=100)[0]["generated_text"]
     return result.replace(prompt, "").strip()
 
 # Module 2: Citizen Feedback
@@ -66,7 +74,7 @@ def detect_anomaly(csv_file):
 # Module 6: Chat Assistant
 def chat_assistant(question):
     prompt = f"Answer this smart city sustainability question:\n\nQ: {question}\nA:"
-    result = llm(prompt, max_new_tokens=200, temperature=0.7)[0]["generated_text"]
+    result = llm(prompt, max_new_tokens=100, temperature=0.7)[0]["generated_text"]
     return result.replace(prompt, "").strip()
 
 # Gradio App UI
