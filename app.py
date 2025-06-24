@@ -8,26 +8,22 @@ from gradio.themes.base import Base
 from gradio.themes.utils import colors, fonts
 import torch
 
-# GPU Check (Optional Debug Info)
 print("✅ Model loading... GPU available:", torch.cuda.is_available())
 
-# Custom theme
 custom_theme = Base(
     primary_hue=colors.green,
     font=fonts.GoogleFont("Poppins")
 )
 
-# Load IBM Granite model
 model_name = "ibm-granite/granite-3.3-2b-instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     device_map="auto",
-    torch_dtype=torch.float16  # Faster inference on GPU
+    torch_dtype=torch.float16
 )
 llm = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-# Module 1: Policy Summarization
 def policy_summarizer_v2(text, file):
     if file is not None:
         content = file.read().decode("utf-8")
@@ -39,11 +35,9 @@ def policy_summarizer_v2(text, file):
     result = llm(prompt, max_new_tokens=100)[0]["generated_text"]
     return result.replace(prompt, "").strip()
 
-# Module 2: Citizen Feedback
 def citizen_feedback(issue):
     return f"✅ Thank you! Your issue '{issue}' has been logged and categorized appropriately."
 
-# Module 3: KPI Forecasting
 def kpi_forecasting(csv_file):
     df = pd.read_csv(csv_file.name)
     X = df.iloc[:, 0].values.reshape(-1, 1)
@@ -53,13 +47,11 @@ def kpi_forecasting(csv_file):
     prediction = model.predict(next_year)[0]
     return f"📈 Predicted KPI for {next_year[0][0]}: {round(prediction, 2)}"
 
-# Module 4: Eco Tips Generator
 def eco_tips(keyword):
     prompt = f"Give 3 actionable eco-friendly tips related to: {keyword}"
     result = llm(prompt, max_new_tokens=100)[0]["generated_text"]
     return result.replace(prompt, "").strip()
 
-# Module 5: Anomaly Detection
 def detect_anomaly(csv_file):
     df = pd.read_csv(csv_file.name)
     if 'value' not in df.columns:
@@ -71,13 +63,11 @@ def detect_anomaly(csv_file):
         return "✅ No significant anomalies detected."
     return "⚠️ Anomalies found:\n" + anomalies.to_string(index=False)
 
-# Module 6: Chat Assistant
 def chat_assistant(question):
     prompt = f"Answer this smart city sustainability question:\n\nQ: {question}\nA:"
     result = llm(prompt, max_new_tokens=100, temperature=0.7)[0]["generated_text"]
     return result.replace(prompt, "").strip()
 
-# Gradio App UI
 with gr.Blocks(theme=custom_theme) as app:
     gr.Markdown("## 🌆 Sustainable Smart City Assistant")
     gr.Markdown("Built with IBM Granite LLM 🧠 to empower urban planning, feedback, sustainability, and innovation.")
