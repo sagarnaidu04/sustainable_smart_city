@@ -1,8 +1,0 @@
-matplotlib
-ipywidgets
-gradio
-transformers
-torch
-pandas
-scikit-learn
-accelerate
